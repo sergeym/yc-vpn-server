@@ -1,0 +1,6 @@
+---
+
+- import_playbook: playbooks/00-get-info.yml
+- import_playbook: playbooks/01-create-server.yml
+- import_playbook: playbooks/02-setup-vpn.yml
+

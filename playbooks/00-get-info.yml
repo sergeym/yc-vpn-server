@@ -1,0 +1,44 @@
+---
+
+- name: 00-get-info.yml
+  hosts: production
+  connection: local
+  gather_facts: no
+  tasks:
+    - name: Get listing
+      shell: yc compute instance list --format=json
+      register: server_list_command
+
+    - set_fact:
+        server_list: "{{ server_list_command.stdout | from_json }}"
+
+    - name: "Filter by name"
+      set_fact:
+        vpn_server: "{{ item }}"
+      loop: "{{ server_list | json_query(jmesquery)}}"
+      vars:
+        jmesquery: "[? name==`vpn-server`].{name: name, ip: network_interfaces[0].primary_v4_address.one_to_one_nat.address}"
+
+    - debug:
+        msg: "Server running on {{ vpn_server.ip }}"
+      when: vpn_server is defined
+
+    - debug:
+        msg: "Server not running"
+      when: vpn_server is not defined
+
+    - name: Register the ip address
+      add_host:
+        hostname: '{{ inventory_hostname }}'
+        ansible_host: '{{ vpn_server.ip }}'
+        ansible_user: root
+      when: vpn_server is defined
+
+    - local_action: stat path="../data/id_rsa"
+      register: local_private_key_file
+
+    - name: Create SSH keys
+      openssh_keypair:
+        path: "../data/id_rsa"
+        size: 2048
+      when: not local_private_key_file.stat.exists

@@ -1,0 +1,39 @@
+---
+
+- name: 01-create-server.yml
+  hosts: production
+  connection: local
+  gather_facts: no
+  tasks:
+
+    - name: Creating instance (wait)
+      shell: yc compute instance create --create-boot-disk image-folder-id=standard-images,image-family=openvpn --name vpn-server --zone ru-central1-c --network-interface subnet-name=default-ru-central1-c,nat-ip-version=ipv4 --preemptible --core-fraction 5 --ssh-key ../data/id_rsa.pub --format=json
+      register: new_server_command
+      when: vpn_server is not defined
+
+    - set_fact:
+        server_info: "{{ new_server_command.stdout | from_json }}"
+      when: vpn_server is not defined and new_server_command is defined
+
+    - name: "Extracting server information"
+      set_fact:
+        vpn_server:
+          name: '{{ server_info.name }}'
+          ip: '{{ server_info.network_interfaces[0].primary_v4_address.one_to_one_nat.address }}'
+      when: vpn_server is not defined and server_info is defined
+
+    - debug:
+        msg: "Server running on {{ vpn_server.ip }}"
+
+    - name: Register the ip address
+      add_host:
+        hostname: '{{ inventory_hostname }}'
+        ansible_host: '{{ vpn_server.ip }}'
+        ansible_user: root
+      when: vpn_server is defined
+
+    - name: Wait for the server started
+      wait_for:
+        port: 943
+        host: '{{ vpn_server.ip }}'
+        delay: 10

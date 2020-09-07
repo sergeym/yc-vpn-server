@@ -1,0 +1,16 @@
+---
+
+- name: 99-remove-server.yml
+  hosts: production
+  connection: local
+  gather_facts: no
+  tasks:
+
+    - name: Remove VPN Server
+      shell: yc compute instance delete vpn-server
+      when: vpn_server.ip is defined
+
+    - name: Remove connection profile
+      file:
+        state: absent
+        path: "../data/vpnuser.ovpn"

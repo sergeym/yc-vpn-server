@@ -1,0 +1,5 @@
+---
+
+- import_playbook: playbooks/00-get-info.yml
+- import_playbook: playbooks/99-remove-server.yml
+

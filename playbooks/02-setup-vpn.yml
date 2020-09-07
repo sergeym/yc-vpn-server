@@ -1,0 +1,38 @@
+---
+
+- name: 02-setup-vpn.yml
+  hosts: production
+  gather_facts: no
+  vars_prompt:
+    - name: password
+      prompt: "What is your OpenVPN password?"
+  tasks:
+
+    - name: update password
+      user:
+        name: openvpn
+        password:  "{{ password }}"
+      become: yes
+
+    - name: Create user
+      command: /usr/local/openvpn_as/scripts/sacli --user vpnuser --key "type" --value "user_connect" UserPropPut
+      become: yes
+
+    - name: Allow auto login
+      command: /usr/local/openvpn_as/scripts/sacli --user vpnuser --key "prop_autologin" --value "true" UserPropPut
+      become: yes
+
+    - name: Create connection profile
+      command: /usr/local/openvpn_as/scripts/sacli --user vpnuser GetAutologin
+      become: yes
+      register: connection_profile
+
+    - local_action: copy content="{{ connection_profile.stdout }}" dest="../data/vpnuser.ovpn"
+
+    - name: display post install message
+      debug:
+        msg:
+          - 'Done:'
+          - '  to kill server: `ansible-playbook remove.yml`'
+          - '  to ssh: `ssh -i data/id_rsa yc-user@{{ vpn_server.ip }}'
+          - '  to VPN: `sudo openvpn --config data/vpnuser.ovpn'
