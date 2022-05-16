@@ -1,24 +1,37 @@
 # Yandex Cloud OpenVPN server 
 
-1. install Ansible
+1. Yandex Cloud CLI
 
-2. run
+Check for `ya` util existst.
+
+If none, install it:
+
+```bash
+curl https://storage.yandexcloud.net/yandexcloud-yc/install.sh | bash
+```
+Follow the instructions of installer.
+
+Initialize it by executing `yc init`.
+
+2. install Ansible
+
+3. run
 
 ```bash
 ansible-playbook provision.yml
 ```
 
-3. type openvpn user password on prompt
+4. type openvpn user password on prompt
 
-4. run
+5. run
 
 ```bash
 sudo openvpn --config data/vpnuser.ovpn
 ```
 
-5. open `http://ip.yandex.ru/` to make sure you looks like russian
+6. open `http://ip.yandex.ru/` to make sure you looks like russian
 
-6. to get back, just run
+7. to get back, just run
 
 ```bash
 ansible-playbook remove.yml
